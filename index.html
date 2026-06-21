@@ -341,7 +341,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
   </div>
   <div class="home-menu">
-    <button class="menu-btn primary" onclick="nav('game-select')">
+    <button class="menu-btn primary" onclick="startAppMusic(); nav('game-select')">
       <span class="btn-icon">🎮</span> Jugar
     </button>
     <button class="menu-btn" onclick="nav('about')">
@@ -618,6 +618,46 @@ const state = {
   }
 };
 
+
+// ══════════════════════════════════════════
+// AUDIO
+// ══════════════════════════════════════════
+
+const menuMusic = new Audio('mainmusic.mp3');
+const gameMusic = new Audio('gamemusic.mp3');
+
+menuMusic.loop = true;
+gameMusic.loop = true;
+
+menuMusic.volume = 1;
+gameMusic.volume = 1;
+
+let currentMusic = null;
+
+function playMenuMusic() {
+  if (currentMusic === menuMusic) return;
+
+  if (currentMusic) {
+    currentMusic.pause();
+    currentMusic.currentTime = 0;
+  }
+
+  menuMusic.play().catch(() => {});
+  currentMusic = menuMusic;
+}
+
+function playGameMusic() {
+  if (currentMusic === gameMusic) return;
+
+  if (currentMusic) {
+    currentMusic.pause();
+    currentMusic.currentTime = 0;
+  }
+
+  gameMusic.play().catch(() => {});
+  currentMusic = gameMusic;
+}
+
 // ══════════════════════════════════════════
 //  NAVIGATION  (with transitions)
 // ══════════════════════════════════════════
@@ -650,6 +690,27 @@ function nav(id) {
   if (id === 'game-select') renderGameSelect();
   if (id === 'config')      renderConfig();
   if (id === 'players')     renderPlayers();
+
+  // Cambio automático de música
+
+if (
+  id === 'home' ||
+  id === 'game-select' ||
+  id === 'config' ||
+  id === 'players' ||
+  id === 'results' ||
+  id === 'about'
+) {
+  playMenuMusic();
+}
+
+if (
+  id === 'handoff' ||
+  id === 'countdown' ||
+  id === 'game'
+) {
+  playGameMusic();
+}
 }
 
 // ══════════════════════════════════════════
@@ -1003,6 +1064,16 @@ function endPlayerTurn() {
   state.currentPlayerIndex++;
   if (state.currentPlayerIndex < state.players.length) showHandoff();
   else showResults();
+}
+
+// ══════════════════════════════════════════
+//  startAppMusic
+// ══════════════════════════════════════════
+
+function startAppMusic() {
+  if (!currentMusic) {
+    playMenuMusic();
+  }
 }
 
 // ══════════════════════════════════════════
