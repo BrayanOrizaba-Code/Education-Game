@@ -1,0 +1,262 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Miss Ale 🐸</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ══ HOME ══ -->
+  <div id="home" class="screen">
+    <div class="frog-mascot">🐸</div>
+    <div class="logo-block">
+      <div class="logo-title">Miss <span>Ale</span></div>
+      <div class="logo-sub">English Challenge</div>
+      <div class="home-letter-row">
+        <div class="deco-tile">A</div>
+        <div class="deco-tile">L</div>
+        <div class="deco-tile">E</div>
+        <div class="deco-tile">!</div>
+        <div class="deco-tile">🐸</div>
+      </div>
+    </div>
+    <div class="home-menu">
+      <button class="menu-btn primary" onclick="nav('game-select')">
+        <span class="btn-icon">🎮</span> Play
+      </button>
+      <button class="menu-btn" onclick="nav('about')">
+        <span class="btn-icon">ℹ️</span> About
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ GAME SELECT ══ -->
+  <div id="game-select" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="nav('home')">←</button>
+      <h1>Miss <span>Ale</span> 🐸</h1>
+    </div>
+    <div class="scroll-content">
+      <div class="game-grid" id="gameGrid"></div>
+    </div>
+  </div>
+
+  <!-- ══ CONFIG ══ -->
+  <div id="config" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="nav('game-select')">←</button>
+      <h1>Game <span>Settings</span></h1>
+    </div>
+    <div class="scroll-content" style="flex:1;">
+
+      <div class="config-section">
+        <div class="config-label">Difficulty</div>
+        <div class="option-grid" id="diffOpts"></div>
+      </div>
+
+      <!-- Game-specific panel (e.g. word builder, lesson editor) -->
+      <div id="gameCustomPanel"></div>
+
+      <div class="config-section" id="wordCountSection">
+        <div class="config-label">Number of Words</div>
+        <div class="option-grid" id="wordCountOpts"></div>
+      </div>
+
+      <div class="config-section" id="timeSection">
+        <div class="config-label">Time per Word</div>
+        <div class="option-grid" id="timeOpts"></div>
+      </div>
+
+    </div>
+    <div class="bottom-bar">
+      <button class="full-btn" id="configNextBtn" onclick="nav('players')">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ══ PLAYERS ══ -->
+  <div id="players" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="nav('config')">←</button>
+      <h1>Players <span>👥</span></h1>
+    </div>
+    <div class="scroll-content" style="flex:1;">
+      <div class="player-list" id="playerList"></div>
+      <button class="add-player-btn" onclick="addPlayer()" id="addPlayerBtn">+ Add player</button>
+    </div>
+    <div class="bottom-bar">
+      <button class="full-btn" onclick="beginGame()">Let's Go! 🚀</button>
+    </div>
+  </div>
+
+  <!-- ══ HANDOFF ══ -->
+  <div id="handoff" class="screen">
+    <div class="handoff-frog">🐸</div>
+    <div class="handoff-avatar" id="handoffAvatar"></div>
+    <div>
+      <div class="handoff-name" id="handoffName"></div>
+      <div class="handoff-sub">It's your turn</div>
+    </div>
+    <div class="handoff-device">📱</div>
+    <p style="color:var(--muted);font-size:14px;text-align:center;max-width:260px;">
+      Pass the device and press when ready
+    </p>
+    <button class="full-btn" style="max-width:300px;" onclick="startCountdown()">Ready ✋</button>
+  </div>
+
+  <!-- ══ COUNTDOWN ══ -->
+  <div id="countdown" class="screen">
+    <div id="countdownDisplay"></div>
+    <div class="countdown-frog">🐸</div>
+  </div>
+
+  <!-- ══ GAME (Word Scramble) ══ -->
+  <div id="game" class="screen">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+    </div>
+    <div class="game-header">
+      <div class="game-player-tag">
+        <div class="game-avatar"     id="gameAvatar"></div>
+        <div>
+          <div class="game-player-name" id="gamePlayerName"></div>
+          <div class="game-progress"    id="gameProgress"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="timer-display" id="timerDisplay">–</div>
+        <button class="pause-btn" onclick="pauseGame()" title="Pause">⏸</button>
+      </div>
+    </div>
+    <div class="game-body">
+      <div class="word-hint" id="wordHint"></div>
+      <div class="tiles-area">
+        <div class="answer-slots"  id="answerSlots"></div>
+        <div class="tiles-divider"></div>
+        <div class="tiles-row"     id="scrambledTiles"></div>
+      </div>
+      <div class="game-actions">
+        <button class="game-btn"         onclick="clearAnswer()">🔄 Clear</button>
+        <button class="game-btn primary" onclick="checkAnswer()" id="checkBtn" disabled>✓ Check</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ READING GAME ══ -->
+  <div id="reading-game" class="screen">
+
+    <!-- Reading View -->
+    <div id="rg-reading-view">
+      <div class="top-bar">
+        <h1 id="rg-title" style="flex:1;font-size:17px;"></h1>
+        <button class="pause-btn" id="rg-pause-btn" onclick="pauseReadingGame()" title="Pause">⏸</button>
+      </div>
+      <div class="rg-reading-body scroll-content">
+        <div id="rg-image-wrap" class="rg-image-wrap"></div>
+        <div id="rg-text"       class="rg-text"></div>
+      </div>
+      <div class="bottom-bar">
+        <button class="full-btn" onclick="ReadingGame._startQuiz()">I'm done reading → Questions</button>
+      </div>
+    </div>
+
+    <!-- Quiz View -->
+    <div id="rg-quiz-view" style="display:none;flex-direction:column;min-height:100vh;">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="rg-q-progress" style="width:0%"></div>
+      </div>
+      <div class="top-bar" style="justify-content:space-between;">
+        <div id="rg-q-num"  class="game-progress" style="font-size:14px;font-weight:700;color:var(--muted);">Question 1 of 5</div>
+        <div id="rg-back-note" class="rg-no-back" style="display:none;">🔒 No going back</div>
+      </div>
+      <div class="scroll-content" style="flex:1;">
+        <div id="rg-q-text" class="rg-q-text"></div>
+        <div id="rg-options" class="rg-options"></div>
+      </div>
+      <div class="bottom-bar">
+        <button class="full-btn" id="rg-next-btn" onclick="ReadingGame._nextQuestion()" disabled>Next →</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ RESULTS ══ -->
+  <div id="results" class="screen">
+    <div class="top-bar">
+      <h1>Results <span>🏆</span></h1>
+    </div>
+    <div class="results-body">
+      <div class="winner-banner" id="winnerBanner"></div>
+      <div class="results-grid"  id="resultsGrid"></div>
+      <div id="wordHistorySection"></div>
+    </div>
+    <div class="bottom-bar">
+      <button class="full-btn" onclick="nav('home')">🏠 Home</button>
+    </div>
+  </div>
+
+  <!-- ══ ABOUT ══ -->
+  <div id="about" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="nav('home')">←</button>
+      <h1>About <span>🐸</span></h1>
+    </div>
+    <div class="scroll-content">
+      <div class="about-card">
+        <h2>🐸 Miss Ale – English Challenge</h2>
+        <p>Learn English the fun way with mini-games designed to practice vocabulary, spelling, and reading comprehension.</p>
+        <span class="version-tag">v3.0.0</span>
+      </div>
+      <div class="about-card">
+        <h2>🎮 Available Games</h2>
+        <p><strong style="color:var(--accent)">Word Scramble</strong> — Unscramble letters to form the correct English word. Use Custom mode to add your own words.<br><br>
+        <strong style="color:var(--accent)">Reading Quest</strong> — Read a teacher-provided passage and answer 5 comprehension questions. No going back during the quiz!<br><br>
+        <em style="color:var(--muted)">Coming soon: Memory Match, Spelling Bee, Hangman, Quiz...</em></p>
+      </div>
+      <div class="about-card">
+        <h2>📋 Teacher Mode</h2>
+        <p>In <strong style="color:var(--accent)">Word Scramble</strong>, choose Custom to build your own word list with hints.<br><br>
+        In <strong style="color:var(--accent)">Reading Quest</strong>, paste any text, add an image URL, and write 5 multiple-choice questions.</p>
+      </div>
+      <div class="about-card">
+        <h2>👥 Multiplayer</h2>
+        <p>Play solo or compete with up to 10 friends. Most correct answers wins — ties broken by total time.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- ══ PAUSE OVERLAY ══ -->
+<div id="pauseOverlay" class="pause-overlay">
+  <div class="pause-modal">
+    <div class="pause-icon">⏸</div>
+    <div class="pause-title">Game Paused</div>
+
+    <div class="pause-volume-row">
+      <span class="pause-vol-icon">🔊</span>
+      <input type="range" id="pauseVolumeSlider" class="pause-slider"
+        min="0" max="100" value="80"
+        oninput="updateVolume(this.value)">
+      <span class="pause-vol-label" id="pauseVolumeLabel">80%</span>
+    </div>
+
+    <div class="pause-actions">
+      <button class="pause-resume-btn" onclick="closePause()">▶ Resume</button>
+      <button class="pause-quit-btn"   onclick="quitGame()">✕ Quit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts: core first, then game modules -->
+<script src="js/app.js"></script>
+<script src="games/scramble.js"></script>
+<script src="games/reading.js"></script>
+<!-- Add new games here: <script src="games/mygame.js"></script> -->
+
+</body>
+</html>
