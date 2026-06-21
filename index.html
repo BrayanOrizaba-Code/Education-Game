@@ -341,7 +341,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
   </div>
   <div class="home-menu">
-    <button class="menu-btn primary" onclick="startAppMusic(); nav('game-select')">
+    <button class="menu-btn primary" onclick="nav('game-select')">
       <span class="btn-icon">🎮</span> Jugar
     </button>
     <button class="menu-btn" onclick="nav('about')">
@@ -1064,16 +1064,6 @@ function endPlayerTurn() {
   state.currentPlayerIndex++;
   if (state.currentPlayerIndex < state.players.length) showHandoff();
   else showResults();
-}
-
-// ══════════════════════════════════════════
-//  startAppMusic
-// ══════════════════════════════════════════
-
-function startAppMusic() {
-  if (!currentMusic) {
-    playMenuMusic();
-  }
 }
 
 // ══════════════════════════════════════════
