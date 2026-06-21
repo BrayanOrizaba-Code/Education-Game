@@ -1,333 +1,420 @@
-
 // ══════════════════════════════════════════
-//  MISS ALE — CORE APP  v3.0  (app.js)
-//  Navigation · State · Audio · Pause · Boot
+//  WORD SCRAMBLE  (games/scramble.js)
+//  Self-contained game module.
+//  Registers itself into GAME_REGISTRY.
 // ══════════════════════════════════════════
 
-// ── Global State ──────────────────────────
-const STATE = {
-  selectedGame:       null,
-  config:             { difficulty: 'easy', wordCount: 10, timeLimit: 0 },
-  players:            [''],
-  customWords:        [],   // [{word, hint, category}]
-  currentPlayerIndex: 0,
-  scores:             [],
-};
+(function () {
 
-// ── Audio engine ──────────────────────────
-const AUDIO = (() => {
-  const menu = new Audio('mainmusic.mp3');
-  const game = new Audio('gamemusic.mp3');
-  menu.loop = game.loop = true;
-  menu.volume = game.volume = 0.8;
-  let current = null;
-  let _vol = 0.8;
-
-  function play(track) {
-    if (current === track) return;
-    if (current) { current.pause(); current.currentTime = 0; }
-    track.volume = _vol;
-    track.play().catch(() => {});
-    current = track;
-  }
-  function setVolume(v) {
-    _vol = Math.max(0, Math.min(1, v));
-    if (current) current.volume = _vol;
-  }
-  function getVolume() { return _vol; }
-  function pause()  { if (current) current.pause(); }
-  function resume() { if (current) current.play().catch(() => {}); }
-
-  return { menu: () => play(menu), game: () => play(game), setVolume, getVolume, pause, resume };
-})();
-
-// ── Navigation ────────────────────────────
-const MENU_SCREENS = new Set(['home','game-select','config','players','results','about']);
-const GAME_SCREENS = new Set(['handoff','countdown','game','reading-game']);
-
-let currentScreen = 'home';
-
-function nav(id) {
-  const prev = document.getElementById(currentScreen);
-  const next = document.getElementById(id);
-  if (!next || id === currentScreen) return;
-
-  const ORDER = [
-    'home','game-select','config','players',
-    'handoff','countdown','game','reading-game','results','about'
-  ];
-  const forward = ORDER.indexOf(id) >= ORDER.indexOf(currentScreen);
-
-  prev.classList.remove('visible');
-  prev.classList.add(forward ? 'slide-left' : 'slide-right');
-
-  next.classList.add('active');
-  next.classList.add(forward ? 'slide-right' : 'slide-left');
-
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    next.classList.add('visible');
-    next.classList.remove('slide-left','slide-right');
-  }));
-
-  setTimeout(() => {
-    prev.classList.remove('active','slide-left','slide-right');
-    currentScreen = id;
-  }, 300);
-
-  if (MENU_SCREENS.has(id)) AUDIO.menu();
-  if (GAME_SCREENS.has(id)) AUDIO.game();
-
-  const hooks = {
-    'game-select': renderGameSelect,
-    'config':      renderConfig,
-    'players':     renderPlayers,
+  // ── Dictionary ──────────────────────────
+  const DICTIONARY = {
+    easy: [
+      { word: 'CAT',    hint: '🐱 Pet animal',           category: 'Animals' },
+      { word: 'DOG',    hint: '🐶 Pet animal',           category: 'Animals' },
+      { word: 'CAR',    hint: '🚗 Vehicle',              category: 'Objects' },
+      { word: 'BOOK',   hint: '📚 For reading',          category: 'Objects' },
+      { word: 'APPLE',  hint: '🍎 Red fruit',            category: 'Food' },
+      { word: 'SUN',    hint: '☀️ In the sky',           category: 'Nature' },
+      { word: 'TREE',   hint: '🌳 Large plant',          category: 'Nature' },
+      { word: 'FISH',   hint: '🐟 Aquatic animal',       category: 'Animals' },
+      { word: 'BIRD',   hint: '🐦 It flies',             category: 'Animals' },
+      { word: 'MOON',   hint: '🌙 At night',             category: 'Nature' },
+      { word: 'STAR',   hint: '⭐ In the sky',           category: 'Nature' },
+      { word: 'CAKE',   hint: '🎂 Sweet dessert',        category: 'Food' },
+      { word: 'MILK',   hint: '🥛 White drink',          category: 'Food' },
+      { word: 'FIRE',   hint: '🔥 Hot',                  category: 'Nature' },
+      { word: 'RAIN',   hint: '🌧️ Falls from the sky',  category: 'Nature' },
+      { word: 'BEAR',   hint: '🐻 Forest animal',        category: 'Animals' },
+      { word: 'ROSE',   hint: '🌹 Flower',               category: 'Nature' },
+      { word: 'BALL',   hint: '⚽ For playing',          category: 'Objects' },
+      { word: 'DOOR',   hint: '🚪 Entrance',             category: 'Objects' },
+      { word: 'FROG',   hint: '🐸 Jumps',                category: 'Animals' },
+    ],
+    medium: [
+      { word: 'COMPUTER', hint: '💻 Technology',          category: 'Technology' },
+      { word: 'ELEPHANT', hint: '🐘 Large animal',        category: 'Animals' },
+      { word: 'AIRPORT',  hint: '✈️ For traveling',      category: 'Travel' },
+      { word: 'KITCHEN',  hint: '🍳 Where cooking happens', category: 'Home' },
+      { word: 'DOCTOR',   hint: '👨‍⚕️ Health profession',  category: 'Professions' },
+      { word: 'SCHOOL',   hint: '🏫 Place of study',      category: 'Places' },
+      { word: 'GARDEN',   hint: '🌻 Outdoor space',       category: 'Home' },
+      { word: 'SUMMER',   hint: '☀️ Hot season',         category: 'Nature' },
+      { word: 'WINTER',   hint: '❄️ Cold season',        category: 'Nature' },
+      { word: 'ORANGE',   hint: '🍊 Citrus fruit',        category: 'Food' },
+      { word: 'PURPLE',   hint: '🟣 Color',               category: 'Colors' },
+      { word: 'YELLOW',   hint: '🟡 Bright color',        category: 'Colors' },
+      { word: 'TRAVEL',   hint: '✈️ Go to another place', category: 'Travel' },
+      { word: 'MARKET',   hint: '🛒 Shopping place',      category: 'Places' },
+      { word: 'BUTTER',   hint: '🧈 For bread',           category: 'Food' },
+      { word: 'LAWYER',   hint: '⚖️ Legal profession',    category: 'Professions' },
+      { word: 'ROCKET',   hint: '🚀 Goes to space',       category: 'Technology' },
+      { word: 'BRIDGE',   hint: '🌉 Connects two sides',  category: 'Places' },
+      { word: 'CHEESE',   hint: '🧀 Dairy product',       category: 'Food' },
+      { word: 'DRAGON',   hint: '🐉 Mythical creature',   category: 'Animals' },
+    ],
+    hard: [
+      { word: 'ENVIRONMENT',    hint: '🌍 Nature around us',     category: 'Science' },
+      { word: 'KNOWLEDGE',      hint: '🧠 What you know',        category: 'Concepts' },
+      { word: 'PROGRAMMING',    hint: '💻 Writing code',         category: 'Technology' },
+      { word: 'INDEPENDENT',    hint: '🗽 Free, autonomous',     category: 'Concepts' },
+      { word: 'UNIVERSITY',     hint: '🎓 Higher education',     category: 'Places' },
+      { word: 'RESTAURANT',     hint: '🍽️ Place to eat out',    category: 'Places' },
+      { word: 'MATHEMATICS',    hint: '📐 Science of numbers',   category: 'Science' },
+      { word: 'ELECTRICITY',    hint: '⚡ Energy',               category: 'Science' },
+      { word: 'COMMUNICATION',  hint: '📡 Sending messages',     category: 'Concepts' },
+      { word: 'TRANSPORTATION', hint: '🚌 Moving from place to place', category: 'Travel' },
+      { word: 'PHOTOGRAPHY',    hint: '📷 Art of photos',        category: 'Art' },
+      { word: 'ARCHITECTURE',   hint: '🏛️ Design of buildings', category: 'Art' },
+      { word: 'CELEBRATION',    hint: '🎉 Festivity',            category: 'Concepts' },
+      { word: 'TEMPERATURE',    hint: '🌡️ Measure of heat/cold', category: 'Science' },
+      { word: 'IMAGINATION',    hint: '✨ Creating in the mind', category: 'Concepts' },
+    ],
   };
-  if (hooks[id]) hooks[id]();
-}
 
-// ── Game Registry ─────────────────────────
-const GAME_REGISTRY = (() => {
-  const _games = [];
-  return {
-    register(g) { _games.push(g); },
-    all()        { return _games; },
-    find(id)     { return _games.find(g => g.id === id); },
+  // ── Internal round state (isolated from app STATE) ──
+  const round = {
+    words:       [],
+    wordIndex:   0,
+    startTime:   null,
+    timerInterval: null,
+    answer:      [],
+    scrambled:   [],
+    blocked:     false,
+    // callbacks injected by startRound
+    _onNextPlayer: null,
+    _onGameOver:   null,
+    _appState:     null,
   };
-})();
 
-// ── Game Select ───────────────────────────
-function renderGameSelect() {
-  document.getElementById('gameGrid').innerHTML = GAME_REGISTRY.all().map(g => `
-    <div class="game-card ${g.available ? '' : 'locked'}"
-         ${g.available ? `onclick="selectGame('${g.id}')"` : ''}>
-      <span class="game-badge ${g.available ? 'badge-available' : 'badge-soon'}">
-        ${g.available ? 'Available' : 'Coming Soon'}
-      </span>
-      <div class="game-icon">${g.icon}</div>
-      <div class="game-name">${g.name}</div>
-      <div class="game-desc">${g.description}</div>
-      <div class="diff-row">
-        ${[1,2,3,4,5].map(i => `<div class="diff-dot ${i<=g.difficulty?'on':''}"></div>`).join('')}
-        <span style="font-size:11px;color:var(--muted);margin-left:4px;">Difficulty</span>
-      </div>
-    </div>`).join('');
-}
-
-function selectGame(id) {
-  STATE.selectedGame = GAME_REGISTRY.find(id);
-  nav('config');
-}
-
-// ── Config Screen ─────────────────────────
-function renderConfig() {
-  const game = STATE.selectedGame;
-
-  const diffs = (game && game.getDifficultyOptions)
-    ? game.getDifficultyOptions()
-    : [
-        {v:'easy',   l:'Easy 🟢'},
-        {v:'medium', l:'Medium 🟡'},
-        {v:'hard',   l:'Hard 🔴'},
-        {v:'custom', l:'Custom 📋'},
-      ];
-
-  document.getElementById('diffOpts').innerHTML = diffs.map(d =>
-    `<button class="opt-btn ${STATE.config.difficulty===d.v?'selected':''}"
-       onclick="setConfig('difficulty','${d.v}')">${d.l}</button>`
-  ).join('');
-
-  const customPanel = document.getElementById('gameCustomPanel');
-  if (game && game.renderConfigPanel) {
-    customPanel.innerHTML = '';
-    game.renderConfigPanel(customPanel, STATE.config);
-  } else {
-    customPanel.innerHTML = '';
-  }
-
-  // Word count + time — hidden for games that opt out
-  const showWordCount = !(game && game.hideWordCount);
-  const showTime      = !(game && game.hideTimeLimit);
-
-  document.getElementById('wordCountSection').style.display = showWordCount ? '' : 'none';
-  document.getElementById('timeSection').style.display      = showTime      ? '' : 'none';
-
-  if (showWordCount) {
-    const counts = [5,10,20,50];
-    document.getElementById('wordCountOpts').innerHTML = counts.map(c =>
-      `<button class="opt-btn ${STATE.config.wordCount===c?'selected':''}"
-         onclick="setConfig('wordCount',${c})">${c} words</button>`
-    ).join('');
-  }
-
-  if (showTime) {
-    const times = [{v:0,l:'No limit'},{v:10,l:'10 sec'},{v:20,l:'20 sec'},{v:30,l:'30 sec'}];
-    document.getElementById('timeOpts').innerHTML = times.map(t =>
-      `<button class="opt-btn ${STATE.config.timeLimit===t.v?'selected':''}"
-         onclick="setConfig('timeLimit',${t.v})">${t.l}</button>`
-    ).join('');
-  }
-
-  updateConfigBtn();
-}
-
-function setConfig(key, val) {
-  STATE.config[key] = val;
-  renderConfig();
-}
-
-function updateConfigBtn() {
-  const btn  = document.getElementById('configNextBtn');
-  if (!btn) return;
-  const game  = STATE.selectedGame;
-  const valid = (!game || !game.validateConfig)
-    ? {ok:true}
-    : game.validateConfig(STATE.config, STATE);
-  btn.disabled    = !valid.ok;
-  btn.textContent = valid.ok ? 'Continue →' : (valid.message || 'Complete setup first');
-}
-
-// ── Players Screen ────────────────────────
-function renderPlayers() {
-  if (!STATE.players.length) STATE.players = [''];
-  document.getElementById('playerList').innerHTML = STATE.players.map((p,i) => `
-    <div class="player-row">
-      <div class="player-num">${i+1}</div>
-      <input class="player-input" type="text" placeholder="Player ${i+1}" value="${p}"
-        oninput="STATE.players[${i}]=this.value" maxlength="20">
-      ${STATE.players.length > 1
-        ? `<button class="remove-player-btn" onclick="removePlayer(${i})">✕</button>`
-        : ''}
-    </div>`).join('');
-  document.getElementById('addPlayerBtn').style.display =
-    STATE.players.length >= 10 ? 'none' : '';
-}
-
-function addPlayer()     { if (STATE.players.length<10){STATE.players.push('');renderPlayers();} }
-function removePlayer(i) { STATE.players.splice(i,1); renderPlayers(); }
-
-// ── Game Flow ─────────────────────────────
-function beginGame() {
-  STATE.players = STATE.players.map((p,i) => p.trim() || `Player ${i+1}`);
-  STATE.currentPlayerIndex = 0;
-  STATE.scores = STATE.players.map(n =>
-    ({name:n, correct:0, wrong:0, totalTime:0, words:[]})
-  );
-  showHandoff();
-}
-
-function showHandoff() {
-  const name     = STATE.players[STATE.currentPlayerIndex];
-  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  document.getElementById('handoffAvatar').textContent = initials;
-  document.getElementById('handoffName').textContent   = name;
-  nav('handoff');
-}
-
-function startCountdown() {
-  nav('countdown');
-  const display = document.getElementById('countdownDisplay');
-  let n = 3;
-  (function tick() {
-    if (n > 0) {
-      display.innerHTML = `<div class="countdown-num">${n}</div>`;
-      n--;
-      setTimeout(tick, 800);
-    } else {
-      display.innerHTML = `<div class="countdown-go">GO! 🚀</div>`;
-      setTimeout(() => {
-        const game = STATE.selectedGame;
-        if (game && game.startRound) game.startRound(STATE, nav, showHandoff, showResults);
-        else console.warn('No startRound() for', game);
-      }, 620);
+  // ── Config panel: word builder for Custom mode ──────
+  function renderConfigPanel(container, config) {
+    if (config.difficulty !== 'custom') {
+      container.innerHTML = '';
+      return;
     }
-  })();
-}
 
-// ══════════════════════════════════════════
-//  PAUSE MENU
-// ══════════════════════════════════════════
-let _pauseCallback = null;   // game module sets this to its own pause/resume logic
+    // Init custom words in STATE if needed
+    const appState = window.STATE;
+    if (!Array.isArray(appState.customWords)) appState.customWords = [];
 
-function openPause(onResume, onQuit) {
-  _pauseCallback = { onResume, onQuit };
-  AUDIO.pause();
+    container.innerHTML = `
+      <div class="config-section" id="scrambleCustomPanel">
+        <div class="config-label" style="margin-top:4px;">Custom Word List 📋</div>
 
-  const vol = Math.round(AUDIO.getVolume() * 100);
-  document.getElementById('pauseVolumeSlider').value = vol;
-  document.getElementById('pauseVolumeLabel').textContent = vol + '%';
+        <!-- Add word form -->
+        <div class="custom-add-row">
+          <input id="cwWord"  class="cw-input" type="text" maxlength="30"
+            placeholder="Word (e.g. ELEPHANT)"
+            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')">
+          <input id="cwHint"  class="cw-input cw-hint-input" type="text" maxlength="60"
+            placeholder="Hint (e.g. 🐘 Large animal)">
+          <button class="cw-add-btn" onclick="ScrambleGame._addCustomWord()">+ Add</button>
+        </div>
+        <div id="cwError" class="cw-error" style="display:none"></div>
 
-  document.getElementById('pauseOverlay').classList.add('open');
-}
+        <!-- Word table -->
+        <div id="cwList" class="cw-list"></div>
+        <div id="cwCount" class="cw-count">0 words</div>
+      </div>`;
 
-function closePause() {
-  document.getElementById('pauseOverlay').classList.remove('open');
-  AUDIO.resume();
-  if (_pauseCallback && _pauseCallback.onResume) _pauseCallback.onResume();
-  _pauseCallback = null;
-}
+    _renderCustomList();
+    updateConfigBtn();
+  }
 
-function quitGame() {
-  document.getElementById('pauseOverlay').classList.remove('open');
-  if (_pauseCallback && _pauseCallback.onQuit) _pauseCallback.onQuit();
-  _pauseCallback = null;
-  AUDIO.menu();
-  nav('home');
-}
+  function _addCustomWord() {
+    const wordEl = document.getElementById('cwWord');
+    const hintEl = document.getElementById('cwHint');
+    const err    = document.getElementById('cwError');
 
-function updateVolume(val) {
-  AUDIO.setVolume(val / 100);
-  document.getElementById('pauseVolumeLabel').textContent = val + '%';
-}
+    const word = (wordEl.value || '').trim().toUpperCase();
+    const hint = (hintEl.value || '').trim() || '📝 Custom word';
 
-// ── Results Screen ─────────────────────────
-function showResults() {
-  const sorted = [...STATE.scores].sort((a,b) =>
-    b.correct !== a.correct ? b.correct - a.correct : a.totalTime - b.totalTime
-  );
+    err.style.display = 'none';
+    if (word.length < 2) {
+      err.textContent = 'Word must be at least 2 letters.';
+      err.style.display = 'block';
+      return;
+    }
+    if (!/^[A-Z]+$/.test(word)) {
+      err.textContent = 'Only letters A-Z allowed.';
+      err.style.display = 'block';
+      return;
+    }
+    const appState = window.STATE;
+    if (appState.customWords.find(w => w.word === word)) {
+      err.textContent = `"${word}" is already in the list.`;
+      err.style.display = 'block';
+      return;
+    }
 
-  const winner = sorted[0];
-  document.getElementById('winnerBanner').innerHTML = `
-    <div class="winner-frog">🐸</div>
-    <div class="winner-label">Winner!</div>
-    <div class="winner-name">🏆 ${winner.name}</div>
-    <div style="font-size:13px;color:var(--muted);margin-top:4px;">
-      ${winner.correct} correct · ${winner.totalTime.toFixed(1)}s total
-    </div>`;
+    appState.customWords.push({ word, hint, category: 'Custom' });
+    wordEl.value = '';
+    hintEl.value = '';
+    wordEl.focus();
+    _renderCustomList();
+    updateConfigBtn();
+  }
 
-  const rankCls = ['rank-1','rank-2','rank-3'];
-  document.getElementById('resultsGrid').innerHTML = sorted.map((s,i) => `
-    <div class="result-row">
-      <div class="rank-badge ${rankCls[i]||'rank-other'}">${i===0?'🏆':i+1}</div>
-      <div class="result-name">${s.name}</div>
-      <div class="result-stats">
-        <div class="result-score">${s.correct}/${s.correct+s.wrong}</div>
-        <div class="result-time">${s.totalTime.toFixed(1)}s</div>
+  function _removeCustomWord(index) {
+    window.STATE.customWords.splice(index, 1);
+    _renderCustomList();
+    updateConfigBtn();
+  }
+
+  function _renderCustomList() {
+    const list  = document.getElementById('cwList');
+    const count = document.getElementById('cwCount');
+    if (!list || !count) return;
+
+    const words = window.STATE.customWords;
+    count.textContent = `${words.length} word${words.length !== 1 ? 's' : ''}`;
+
+    if (!words.length) {
+      list.innerHTML = `<div class="cw-empty">No words yet. Add at least 3 to play.</div>`;
+      return;
+    }
+
+    list.innerHTML = `
+      <div class="cw-table-head">
+        <span>Word</span><span>Hint</span><span></span>
       </div>
-    </div>`).join('');
+      ${words.map((w, i) => `
+        <div class="cw-row">
+          <span class="cw-row-word">${w.word}</span>
+          <span class="cw-row-hint">${w.hint}</span>
+          <button class="cw-remove-btn" onclick="ScrambleGame._removeCustomWord(${i})" title="Remove">✕</button>
+        </div>`).join('')}`;
+  }
 
-  const wh     = document.getElementById('wordHistorySection');
-  const active = STATE.scores.filter(s => s.words.length > 0);
-  wh.innerHTML = active.length ? active.map(s => `
-    <div class="word-history">
-      <div class="wh-title">History — ${s.name}</div>
-      <div class="wh-list">
-        ${s.words.map(w => `
-          <div class="wh-row">
-            <span class="wh-word">${w.word}</span>
-            ${!w.correct && w.guess ? `<span class="wh-correct-word">→ ${w.guess}</span>` : ''}
-            <span class="${w.correct?'wh-ok':'wh-fail'}">${w.correct?'✓':'✗'}</span>
-            <span class="wh-time">${w.time.toFixed(1)}s</span>
-          </div>`).join('')}
-      </div>
-    </div>`).join('') : '';
+  // ── Validate config ──
+  function validateConfig(config, appState) {
+    if (config.difficulty === 'custom') {
+      const n = (appState.customWords || []).length;
+      if (n < 3) return { ok: false, message: `Add at least 3 words (${n}/3)` };
+    }
+    return { ok: true };
+  }
 
-  nav('results');
-}
+  // ── Build word pool ──
+  function _buildWordPool(config, appState) {
+    if (config.difficulty === 'custom') {
+      return [...(appState.customWords || [])].sort(() => Math.random() - 0.5);
+    }
+    return [...DICTIONARY[config.difficulty]].sort(() => Math.random() - 0.5);
+  }
 
-// ── Boot ──────────────────────────────────
-(function boot() {
-  const s = document.getElementById('home');
-  s.classList.add('active');
-  requestAnimationFrame(() => requestAnimationFrame(() => s.classList.add('visible')));
-  currentScreen = 'home';
+  // ── Start round (called by app after countdown) ──
+  function startRound(appState, navFn, onNextPlayer, onGameOver) {
+    const pool  = _buildWordPool(appState.config, appState);
+    const count = Math.min(appState.config.wordCount, pool.length);
+
+    round.words      = pool.slice(0, count);
+    round.wordIndex  = 0;
+    round.blocked    = false;
+    round._appState  = appState;
+    round._onNextPlayer = onNextPlayer;
+    round._onGameOver   = onGameOver;
+    round._navFn     = navFn;
+
+    navFn('game');
+    _renderWord();
+  }
+
+  // ── Render current word ──
+  function _renderWord() {
+    round.blocked = false;
+    const wordObj  = round.words[round.wordIndex];
+    const letters  = wordObj.word.split('');
+    round.answer   = Array(letters.length).fill(null);
+    round.scrambled = _scramble(letters);
+
+    const appState = round._appState;
+    const name     = appState.players[appState.currentPlayerIndex];
+    const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+    document.getElementById('gameAvatar').textContent     = initials;
+    document.getElementById('gamePlayerName').textContent = name;
+    document.getElementById('gameProgress').textContent   =
+      `Word ${round.wordIndex + 1} of ${round.words.length}`;
+    document.getElementById('progressBar').style.width    =
+      (round.wordIndex / round.words.length * 100) + '%';
+    document.getElementById('wordHint').innerHTML =
+      `Hint: <strong>${wordObj.hint}</strong>&nbsp;·&nbsp;Category: <strong>${wordObj.category}</strong>`;
+
+    _renderTiles();
+    _startTimer();
+  }
+
+  function _scramble(letters) {
+    let arr = [...letters], tries = 0;
+    do { arr = arr.sort(() => Math.random() - 0.5); tries++; }
+    while (arr.join('') === letters.join('') && letters.length > 1 && tries < 30);
+    return arr;
+  }
+
+  // ── Tiles ──
+  function _renderTiles() {
+    const wordLen = round.words[round.wordIndex].word.length;
+
+    document.getElementById('answerSlots').innerHTML = round.answer.map((ch, i) => {
+      const filled = ch !== null;
+      return `<div class="answer-slot ${filled ? 'filled' : ''}"
+                   onclick="ScrambleGame._removeFromSlot(${i})">${filled ? ch : ''}</div>`;
+    }).join('');
+
+    document.getElementById('scrambledTiles').innerHTML = round.scrambled.map((ch, i) =>
+      `<div class="tile ${ch === null ? 'used' : ''}"
+            onclick="ScrambleGame._placeLetter(${i})">${ch !== null ? ch : ''}</div>`
+    ).join('');
+
+    const filled = round.answer.filter(c => c !== null).length;
+    document.getElementById('checkBtn').disabled = (filled < wordLen);
+  }
+
+  function _placeLetter(tileIdx) {
+    if (round.blocked || round.scrambled[tileIdx] === null) return;
+    const slot = round.answer.indexOf(null);
+    if (slot === -1) return;
+    round.answer[slot]       = round.scrambled[tileIdx];
+    round.scrambled[tileIdx] = null;
+    _renderTiles();
+  }
+
+  function _removeFromSlot(slotIdx) {
+    if (round.blocked || round.answer[slotIdx] === null) return;
+    const ch  = round.answer[slotIdx];
+    const idx = round.scrambled.indexOf(null);
+    if (idx !== -1) round.scrambled[idx] = ch;
+    else round.scrambled.push(ch);
+    round.answer[slotIdx] = null;
+    _renderTiles();
+  }
+
+  function _clearAnswer() {
+    if (round.blocked) return;
+    const letters = round.words[round.wordIndex].word.split('');
+    round.answer   = Array(letters.length).fill(null);
+    round.scrambled = _scramble(letters);
+    _renderTiles();
+  }
+
+  // ── Check ──
+  function _checkAnswer() {
+    if (round.blocked) return;
+    round.blocked = true;
+
+    const wordObj = round.words[round.wordIndex];
+    const guess   = round.answer.join('');
+    const correct = guess === wordObj.word;
+    const elapsed = _stopTimer();
+
+    document.querySelectorAll('.answer-slot').forEach(s => {
+      s.classList.remove('correct', 'wrong');
+      s.classList.add(correct ? 'correct' : 'wrong');
+    });
+
+    const entry = round._appState.scores[round._appState.currentPlayerIndex];
+    if (correct) entry.correct++; else entry.wrong++;
+    entry.totalTime += elapsed;
+    entry.words.push({ word: wordObj.word, correct, time: elapsed, guess: correct ? null : guess });
+
+    setTimeout(() => {
+      round.wordIndex++;
+      if (round.wordIndex >= round.words.length) _endTurn();
+      else _renderWord();
+    }, correct ? 700 : 1100);
+  }
+
+  // ── Timer ──
+  function _startTimer() {
+    const limit   = round._appState.config.timeLimit;
+    const display = document.getElementById('timerDisplay');
+    if (round.timerInterval) clearInterval(round.timerInterval);
+    round.startTime = Date.now();
+    display.classList.remove('warning');
+    display.textContent = limit === 0 ? '0.0s' : limit + 's';
+
+    round.timerInterval = setInterval(() => {
+      const el = (Date.now() - round.startTime) / 1000;
+      if (limit === 0) {
+        display.textContent = el.toFixed(1) + 's';
+      } else {
+        const rem = limit - el;
+        if (rem <= 0) { _stopTimer(); _autoFail(); return; }
+        display.textContent = rem.toFixed(1) + 's';
+        display.classList.toggle('warning', rem <= 5);
+      }
+    }, 80);
+  }
+
+  function _stopTimer() {
+    if (round.timerInterval) clearInterval(round.timerInterval);
+    round.timerInterval = null;
+    return (Date.now() - round.startTime) / 1000;
+  }
+
+  function _autoFail() {
+    if (round.blocked) return;
+    round.blocked = true;
+    const wordObj = round.words[round.wordIndex];
+    const elapsed = round._appState.config.timeLimit;
+    const entry   = round._appState.scores[round._appState.currentPlayerIndex];
+    entry.wrong++;
+    entry.totalTime += elapsed;
+    entry.words.push({ word: wordObj.word, correct: false, time: elapsed, guess: '(time up)' });
+    document.querySelectorAll('.answer-slot').forEach(s => {
+      s.classList.remove('correct'); s.classList.add('wrong');
+    });
+    setTimeout(() => {
+      round.wordIndex++;
+      if (round.wordIndex >= round.words.length) _endTurn();
+      else _renderWord();
+    }, 950);
+  }
+
+  function _endTurn() {
+    _stopTimer();
+    round._appState.currentPlayerIndex++;
+    if (round._appState.currentPlayerIndex < round._appState.players.length) {
+      round._onNextPlayer();
+    } else {
+      round._onGameOver();
+    }
+  }
+
+  // ── Public API ──────────────────────────
+  const ScrambleGame = {
+    id:          'scramble',
+    name:        'Word Scramble',
+    icon:        '🔤',
+    description: 'Unscramble the letters to form the correct English word.',
+    difficulty:  3,
+    available:   true,
+    // config hooks
+    renderConfigPanel,
+    validateConfig,
+    // gameplay
+    startRound,
+    // tile interaction (called from HTML onclick — must be on window)
+    _placeLetter,
+    _removeFromSlot,
+    _clearAnswer,
+    _checkAnswer,
+    // custom word management (called from HTML onclick)
+    _addCustomWord,
+    _removeCustomWord,
+  };
+
+  // Register with the app
+  GAME_REGISTRY.register(ScrambleGame);
+
+  // Expose on window so onclick="" can reach it
+  window.ScrambleGame = ScrambleGame;
+
+  // Wire the game-screen buttons (they live in the HTML)
+  // These are reassigned each time a game starts, but we hook them once here
+  // and the game screen reuses them.
+  window.clearAnswer  = () => ScrambleGame._clearAnswer();
+  window.checkAnswer  = () => ScrambleGame._checkAnswer();
+
 })();
