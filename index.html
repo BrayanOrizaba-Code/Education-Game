@@ -1,1132 +1,262 @@
+
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Miss Ale 🐸</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg:#0f172a; --surface:#1e293b; --surface2:#273549; --border:#334155;
-  --text:#e2e8f0; --muted:#94a3b8;
-  --accent:#34d399; --accent2:#10b981;
-  --yellow:#fbbf24; --blue:#38bdf8; --green:#4ade80; --red:#f87171; --purple:#a78bfa;
-  --radius:14px; --radius-sm:8px;
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
-#app{min-height:100vh;position:relative;}
-
-/* ── SCREEN TRANSITIONS ── */
-.screen{
-  display:none;min-height:100vh;flex-direction:column;
-  opacity:0;transform:translateY(16px);
-  transition:opacity .28s ease, transform .28s ease;
-  pointer-events:none;
-}
-.screen.active{display:flex;}
-.screen.visible{opacity:1;transform:translateY(0);pointer-events:all;}
-.screen.slide-left{transform:translateX(-40px);}
-.screen.slide-right{transform:translateX(40px);}
-
-/* ── TOP BAR ── */
-.top-bar{
-  display:flex;align-items:center;gap:12px;padding:16px 20px;
-  background:var(--surface);border-bottom:1px solid var(--border);
-  position:sticky;top:0;z-index:10;
-}
-.top-bar h1{font-size:20px;font-weight:900;letter-spacing:-0.5px;}
-.top-bar h1 span{color:var(--accent);}
-.back-btn{
-  background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;
-  padding:4px 8px;border-radius:var(--radius-sm);transition:color .2s;
-}
-.back-btn:hover{color:var(--text);}
-
-/* ── HOME ── */
-#home{justify-content:center;align-items:center;padding:24px 20px;gap:28px;}
-.frog-mascot{font-size:72px;animation:frogBounce 2.5s ease-in-out infinite;line-height:1;}
-@keyframes frogBounce{0%,100%{transform:translateY(0) scale(1);}45%{transform:translateY(-14px) scale(1.05);}55%{transform:translateY(-14px) scale(1.05);}}
-.logo-block{text-align:center;}
-.logo-title{
-  font-size:clamp(38px,9vw,60px);font-weight:900;line-height:1;
-  color:var(--accent);letter-spacing:-2px;
-  text-shadow:0 0 40px rgba(52,211,153,0.25);
-}
-.logo-title span{color:var(--yellow);}
-.logo-sub{font-size:14px;color:var(--muted);margin-top:6px;letter-spacing:2px;text-transform:uppercase;}
-.home-letter-row{display:flex;gap:8px;justify-content:center;margin-top:14px;}
-.deco-tile{
-  width:42px;height:42px;background:var(--surface2);border:2px solid var(--border);
-  border-radius:10px;display:flex;align-items:center;justify-content:center;
-  font-size:18px;font-weight:900;color:var(--accent);
-  animation:floatTile 3s ease-in-out infinite;
-}
-.deco-tile:nth-child(2){animation-delay:.25s;color:var(--yellow);}
-.deco-tile:nth-child(3){animation-delay:.5s;}
-.deco-tile:nth-child(4){animation-delay:.75s;color:var(--yellow);}
-.deco-tile:nth-child(5){animation-delay:1s;}
-@keyframes floatTile{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
-.home-menu{display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;}
-.menu-btn{
-  padding:15px 20px;border-radius:var(--radius);border:2px solid var(--border);
-  background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;
-  font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:12px;
-  transition:border-color .2s,background .2s,transform .12s;
-}
-.menu-btn:hover{border-color:var(--accent);background:var(--surface2);}
-.menu-btn:active{transform:scale(0.97);}
-.menu-btn.primary{background:var(--accent);color:#052e16;border-color:var(--accent);}
-.menu-btn.primary:hover{background:var(--accent2);border-color:var(--accent2);}
-.btn-icon{font-size:20px;}
-
-/* ── SCROLL WRAPPER ── */
-.scroll-content{flex:1;overflow-y:auto;padding:20px;}
-
-/* ── GAME CARDS ── */
-.game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
-.game-card{
-  background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);
-  padding:20px;cursor:pointer;transition:border-color .2s,transform .15s;position:relative;
-}
-.game-card:hover{border-color:var(--accent);transform:translateY(-2px);}
-.game-card.locked{opacity:.45;cursor:default;}
-.game-card.locked:hover{transform:none;border-color:var(--border);}
-.game-badge{
-  position:absolute;top:12px;right:12px;font-size:11px;font-weight:700;
-  padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;
-}
-.badge-soon{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
-.badge-available{background:rgba(52,211,153,.15);color:var(--accent);border:1px solid rgba(52,211,153,.3);}
-.game-icon{font-size:36px;margin-bottom:10px;}
-.game-name{font-size:18px;font-weight:800;margin-bottom:4px;}
-.game-desc{font-size:13px;color:var(--muted);line-height:1.5;}
-.diff-row{display:flex;gap:6px;margin-top:10px;align-items:center;}
-.diff-dot{width:8px;height:8px;border-radius:50%;background:var(--border);}
-.diff-dot.on{background:var(--accent);}
-
-/* ── CONFIG ── */
-.config-section{margin-bottom:22px;}
-.config-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
-.option-grid{display:flex;flex-wrap:wrap;gap:8px;}
-.opt-btn{
-  padding:10px 16px;border-radius:var(--radius-sm);border:2px solid var(--border);
-  background:var(--surface2);color:var(--text);font-family:'Nunito',sans-serif;
-  font-size:14px;font-weight:700;cursor:pointer;transition:border-color .15s,background .15s;
-}
-.opt-btn:hover{border-color:var(--muted);}
-.opt-btn.selected{border-color:var(--accent);background:rgba(52,211,153,.12);color:var(--accent);}
-
-/* Custom word list */
-.custom-words-box{display:none;margin-top:14px;}
-.custom-words-box.show{display:block;}
-#customWordsTextarea{
-  width:100%;min-height:110px;background:var(--surface2);border:2px solid var(--border);
-  border-radius:var(--radius-sm);color:var(--text);font-family:'Nunito',sans-serif;
-  font-size:14px;padding:12px;resize:vertical;outline:none;transition:border-color .15s;
-  line-height:1.6;
-}
-#customWordsTextarea:focus{border-color:var(--accent);}
-.custom-hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;}
-.custom-count{font-size:12px;color:var(--accent);font-weight:700;margin-top:4px;}
-
-/* ── PLAYERS ── */
-.player-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
-.player-row{
-  display:flex;align-items:center;gap:10px;background:var(--surface2);
-  border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;
-  transition:border-color .15s;
-}
-.player-row:focus-within{border-color:var(--accent);}
-.player-num{
-  width:28px;height:28px;border-radius:50%;background:var(--accent);color:#052e16;
-  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0;
-}
-.player-input{
-  flex:1;background:none;border:none;outline:none;color:var(--text);
-  font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;
-}
-.player-input::placeholder{color:var(--muted);font-weight:400;}
-.remove-player-btn{
-  background:none;border:none;color:var(--muted);font-size:18px;
-  cursor:pointer;padding:2px 6px;border-radius:6px;transition:color .15s;
-}
-.remove-player-btn:hover{color:var(--red);}
-.add-player-btn{
-  padding:12px;border-radius:var(--radius-sm);border:2px dashed var(--border);
-  background:none;color:var(--muted);font-family:'Nunito',sans-serif;
-  font-size:14px;font-weight:700;cursor:pointer;width:100%;transition:border-color .2s,color .2s;
-}
-.add-player-btn:hover{border-color:var(--accent);color:var(--accent);}
-
-/* ── HANDOFF ── */
-#handoff{justify-content:center;align-items:center;padding:40px 20px;text-align:center;gap:22px;}
-.handoff-frog{font-size:60px;animation:frogBounce 2s ease-in-out infinite;}
-.handoff-avatar{
-  width:88px;height:88px;border-radius:50%;background:var(--accent);color:#052e16;
-  display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;margin:0 auto;
-}
-.handoff-name{font-size:26px;font-weight:900;}
-.handoff-sub{font-size:15px;color:var(--muted);}
-.handoff-device{font-size:50px;animation:deviceWave 1.8s ease-in-out infinite;}
-@keyframes deviceWave{0%,100%{transform:rotate(-10deg);}50%{transform:rotate(10deg);}}
-
-/* ── COUNTDOWN ── */
-#countdown{justify-content:center;align-items:center;flex-direction:column;gap:16px;}
-.countdown-num{
-  font-size:clamp(110px,32vw,190px);font-weight:900;color:var(--accent);
-  animation:popIn .45s cubic-bezier(.34,1.56,.64,1);line-height:1;
-}
-@keyframes popIn{from{transform:scale(.2);opacity:0;}to{transform:scale(1);opacity:1;}}
-.countdown-go{
-  font-size:clamp(64px,20vw,130px);font-weight:900;color:var(--green);
-  animation:popIn .4s cubic-bezier(.34,1.56,.64,1);
-}
-.countdown-frog{font-size:48px;animation:frogBounce 1s ease-in-out infinite;}
-
-/* ── GAME SCREEN ── */
-#game{flex-direction:column;}
-.progress-bar-wrap{height:5px;background:var(--surface2);}
-.progress-bar-fill{height:100%;background:var(--accent);transition:width .5s ease;}
-.game-header{
-  background:var(--surface);border-bottom:1px solid var(--border);
-  padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;
-}
-.game-player-tag{display:flex;align-items:center;gap:8px;}
-.game-avatar{
-  width:32px;height:32px;border-radius:50%;background:var(--accent);color:#052e16;
-  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0;
-}
-.game-player-name{font-size:15px;font-weight:700;}
-.game-progress{font-size:12px;color:var(--muted);}
-.timer-display{font-size:20px;font-weight:900;color:var(--accent);min-width:64px;text-align:right;}
-.timer-display.warning{color:var(--red);animation:timerPulse .45s ease infinite alternate;}
-@keyframes timerPulse{from{opacity:1;}to{opacity:.4;}}
-
-.game-body{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:20px 16px;gap:20px;
-}
-.word-hint{font-size:13px;color:var(--muted);text-align:center;line-height:1.5;}
-.word-hint strong{color:var(--yellow);}
-
-/* Tiles */
-.tiles-area{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:480px;}
-.answer-slots{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;min-height:62px;}
-.tiles-divider{width:100%;border-top:1px solid var(--border);}
-.tiles-row{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;min-height:62px;}
-
-.tile{
-  width:52px;height:58px;background:var(--surface2);border:2px solid var(--border);
-  border-radius:10px;display:flex;align-items:center;justify-content:center;
-  font-size:24px;font-weight:900;color:var(--text);cursor:pointer;
-  transition:transform .12s,border-color .12s,background .12s,box-shadow .12s;
-  user-select:none;box-shadow:0 4px 0 #0b1220;
-}
-.tile:hover{border-color:var(--accent);background:var(--surface);transform:translateY(-3px);}
-.tile:active{transform:translateY(2px);box-shadow:0 1px 0 #0b1220;}
-.tile.used{opacity:0;pointer-events:none;transform:scale(.7);}
-
-.answer-slot{
-  width:52px;height:58px;background:none;border:2px dashed var(--border);
-  border-radius:10px;display:flex;align-items:center;justify-content:center;
-  font-size:24px;font-weight:900;color:var(--text);cursor:pointer;
-  transition:border-color .12s,background .12s,transform .12s;
-}
-.answer-slot.filled{border-style:solid;border-color:var(--accent);background:var(--surface2);box-shadow:0 3px 0 #0b1220;}
-.answer-slot.filled:hover{border-color:var(--yellow);}
-.answer-slot.correct{
-  border-color:var(--green);background:rgba(74,222,128,.12);color:var(--green);
-  animation:correctPop .35s cubic-bezier(.34,1.56,.64,1);
-}
-@keyframes correctPop{0%{transform:scale(.85);}100%{transform:scale(1);}}
-.answer-slot.wrong{
-  border-color:var(--red);background:rgba(248,113,113,.12);color:var(--red);
-  animation:shake .32s ease;
-}
-@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
-
-.game-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
-.game-btn{
-  padding:12px 22px;border-radius:var(--radius-sm);border:2px solid var(--border);
-  background:var(--surface2);color:var(--text);font-family:'Nunito',sans-serif;
-  font-size:15px;font-weight:700;cursor:pointer;transition:border-color .15s,background .15s,transform .1s;
-}
-.game-btn:hover{border-color:var(--accent);background:var(--surface);}
-.game-btn:active{transform:scale(0.96);}
-.game-btn.primary{background:var(--accent);color:#052e16;border-color:var(--accent);}
-.game-btn.primary:hover{background:var(--accent2);}
-.game-btn:disabled{opacity:.35;cursor:default;transform:none;}
-
-/* ── RESULTS ── */
-#results{flex-direction:column;}
-.results-body{flex:1;overflow-y:auto;padding:20px;}
-.winner-banner{
-  background:rgba(52,211,153,.1);border:2px solid rgba(52,211,153,.3);
-  border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;
-  text-align:center;
-}
-.winner-frog{font-size:48px;animation:frogBounce 2s ease-in-out infinite;}
-.winner-label{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:6px;}
-.winner-name{font-size:24px;font-weight:900;color:var(--accent);}
-.results-grid{display:flex;flex-direction:column;gap:9px;}
-.result-row{
-  display:flex;align-items:center;gap:12px;background:var(--surface);
-  border:1px solid var(--border);border-radius:var(--radius);padding:13px 16px;
-}
-.rank-badge{
-  width:34px;height:34px;border-radius:50%;display:flex;align-items:center;
-  justify-content:center;font-size:15px;font-weight:900;flex-shrink:0;
-}
-.rank-1{background:var(--yellow);color:#1e1005;}
-.rank-2{background:#94a3b8;color:#0f172a;}
-.rank-3{background:#92400e;color:#fef3c7;}
-.rank-other{background:var(--surface2);color:var(--muted);font-size:13px;}
-.result-name{font-size:15px;font-weight:700;flex:1;}
-.result-stats{text-align:right;}
-.result-score{font-size:17px;font-weight:900;color:var(--accent);}
-.result-time{font-size:12px;color:var(--muted);}
-
-/* word history */
-.word-history{margin-top:18px;}
-.wh-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
-.wh-list{display:flex;flex-direction:column;gap:5px;}
-.wh-row{
-  display:flex;align-items:center;justify-content:space-between;
-  background:var(--surface2);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;
-  gap:8px;
-}
-.wh-word{font-weight:800;flex:1;}
-.wh-ok{color:var(--green);}
-.wh-fail{color:var(--red);}
-.wh-correct-word{color:var(--muted);font-size:11px;}
-.wh-time{color:var(--muted);flex-shrink:0;}
-
-/* ── ABOUT ── */
-.about-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;}
-.about-card h2{font-size:16px;font-weight:800;margin-bottom:8px;color:var(--accent);}
-.about-card p{font-size:14px;color:var(--muted);line-height:1.6;}
-.version-tag{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--muted);margin-top:8px;}
-
-/* ── BOTTOM BAR ── */
-.bottom-bar{padding:16px 20px;background:var(--surface);border-top:1px solid var(--border);}
-.full-btn{
-  width:100%;padding:15px;border-radius:var(--radius);border:none;
-  background:var(--accent);color:#052e16;font-family:'Nunito',sans-serif;
-  font-size:17px;font-weight:900;cursor:pointer;transition:background .15s,transform .1s;
-}
-.full-btn:hover{background:var(--accent2);}
-.full-btn:active{transform:scale(0.98);}
-.full-btn:disabled{opacity:.4;cursor:default;transform:none;}
-
-@media(min-width:600px){.game-grid{grid-template-columns:repeat(2,1fr);}}
-@media(min-width:960px){.game-grid{grid-template-columns:repeat(3,1fr);}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Miss Ale 🐸</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
 <div id="app">
 
-<!-- ══ HOME ══ -->
-<div id="home" class="screen">
-  <div class="frog-mascot">🐸</div>
-  <div class="logo-block">
-    <div class="logo-title">Miss <span>Ale</span></div>
-    <div class="logo-sub">English Challenge</div>
-    <div class="home-letter-row">
-      <div class="deco-tile">A</div>
-      <div class="deco-tile">L</div>
-      <div class="deco-tile">E</div>
-      <div class="deco-tile">!</div>
-      <div class="deco-tile">🐸</div>
+  <!-- ══ HOME ══ -->
+  <div id="home" class="screen">
+    <div class="frog-mascot">🐸</div>
+    <div class="logo-block">
+      <div class="logo-title">Miss <span>Ale</span></div>
+      <div class="logo-sub">English Challenge</div>
+      <div class="home-letter-row">
+        <div class="deco-tile">A</div>
+        <div class="deco-tile">L</div>
+        <div class="deco-tile">E</div>
+        <div class="deco-tile">!</div>
+        <div class="deco-tile">🐸</div>
+      </div>
+    </div>
+    <div class="home-menu">
+      <button class="menu-btn primary" onclick="nav('game-select')">
+        <span class="btn-icon">🎮</span> Play
+      </button>
+      <button class="menu-btn" onclick="nav('about')">
+        <span class="btn-icon">ℹ️</span> About
+      </button>
     </div>
   </div>
-  <div class="home-menu">
-    <button class="menu-btn primary" onclick="nav('game-select')">
-      <span class="btn-icon">🎮</span> Jugar
-    </button>
-    <button class="menu-btn" onclick="nav('about')">
-      <span class="btn-icon">ℹ️</span> Acerca de
-    </button>
-  </div>
-</div>
 
-<!-- ══ GAME SELECT ══ -->
-<div id="game-select" class="screen">
-  <div class="top-bar">
-    <button class="back-btn" onclick="nav('home')">←</button>
-    <h1>Miss <span>Ale</span> 🐸</h1>
+  <!-- ══ GAME SELECT ══ -->
+  <div id="game-select" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="nav('home')">←</button>
+      <h1>Miss <span>Ale</span> 🐸</h1>
+    </div>
+    <div class="scroll-content">
+      <div class="game-grid" id="gameGrid"></div>
+    </div>
   </div>
-  <div class="scroll-content">
-    <div class="game-grid" id="gameGrid"></div>
-  </div>
-</div>
 
-<!-- ══ CONFIG ══ -->
-<div id="config" class="screen">
-  <div class="top-bar">
-    <button class="back-btn" onclick="nav('game-select')">←</button>
-    <h1>Configurar <span>Partida</span></h1>
-  </div>
-  <div class="scroll-content" style="flex:1;">
-    <div class="config-section">
-      <div class="config-label">Dificultad</div>
-      <div class="option-grid" id="diffOpts"></div>
-      <!-- Custom word list panel -->
-      <div class="custom-words-box" id="customWordsBox">
-        <div class="config-label" style="margin-top:14px;">Lista de palabras 📋</div>
-        <textarea id="customWordsTextarea"
-          placeholder="Escribe una palabra por línea. Puedes agregar una pista con | después de la palabra.
+  <!-- ══ CONFIG ══ -->
+  <div id="config" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="nav('game-select')">←</button>
+      <h1>Game <span>Settings</span></h1>
+    </div>
+    <div class="scroll-content" style="flex:1;">
 
-Ejemplo:
-CAT | 🐱 Animal doméstico
-SCHOOL | 🏫 Lugar de estudio
-APPLE | 🍎 Fruta roja
-COMPUTER
-ELEPHANT | 🐘 Animal grande"
-          oninput="updateCustomCount()"></textarea>
-        <div class="custom-hint">
-          Una palabra por línea. Opcionalmente agrega <strong>| pista</strong> para dar contexto al jugador.
-          Mínimo 3 palabras, solo letras (A-Z).
+      <div class="config-section">
+        <div class="config-label">Difficulty</div>
+        <div class="option-grid" id="diffOpts"></div>
+      </div>
+
+      <!-- Game-specific panel (e.g. word builder, lesson editor) -->
+      <div id="gameCustomPanel"></div>
+
+      <div class="config-section" id="wordCountSection">
+        <div class="config-label">Number of Words</div>
+        <div class="option-grid" id="wordCountOpts"></div>
+      </div>
+
+      <div class="config-section" id="timeSection">
+        <div class="config-label">Time per Word</div>
+        <div class="option-grid" id="timeOpts"></div>
+      </div>
+
+    </div>
+    <div class="bottom-bar">
+      <button class="full-btn" id="configNextBtn" onclick="nav('players')">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ══ PLAYERS ══ -->
+  <div id="players" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="nav('config')">←</button>
+      <h1>Players <span>👥</span></h1>
+    </div>
+    <div class="scroll-content" style="flex:1;">
+      <div class="player-list" id="playerList"></div>
+      <button class="add-player-btn" onclick="addPlayer()" id="addPlayerBtn">+ Add player</button>
+    </div>
+    <div class="bottom-bar">
+      <button class="full-btn" onclick="beginGame()">Let's Go! 🚀</button>
+    </div>
+  </div>
+
+  <!-- ══ HANDOFF ══ -->
+  <div id="handoff" class="screen">
+    <div class="handoff-frog">🐸</div>
+    <div class="handoff-avatar" id="handoffAvatar"></div>
+    <div>
+      <div class="handoff-name" id="handoffName"></div>
+      <div class="handoff-sub">It's your turn</div>
+    </div>
+    <div class="handoff-device">📱</div>
+    <p style="color:var(--muted);font-size:14px;text-align:center;max-width:260px;">
+      Pass the device and press when ready
+    </p>
+    <button class="full-btn" style="max-width:300px;" onclick="startCountdown()">Ready ✋</button>
+  </div>
+
+  <!-- ══ COUNTDOWN ══ -->
+  <div id="countdown" class="screen">
+    <div id="countdownDisplay"></div>
+    <div class="countdown-frog">🐸</div>
+  </div>
+
+  <!-- ══ GAME (Word Scramble) ══ -->
+  <div id="game" class="screen">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+    </div>
+    <div class="game-header">
+      <div class="game-player-tag">
+        <div class="game-avatar"     id="gameAvatar"></div>
+        <div>
+          <div class="game-player-name" id="gamePlayerName"></div>
+          <div class="game-progress"    id="gameProgress"></div>
         </div>
-        <div class="custom-count" id="customCount">0 palabras válidas</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="timer-display" id="timerDisplay">–</div>
+        <button class="pause-btn" onclick="pauseGame()" title="Pause">⏸</button>
       </div>
     </div>
-    <div class="config-section">
-      <div class="config-label">Número de Palabras</div>
-      <div class="option-grid" id="wordCountOpts"></div>
-    </div>
-    <div class="config-section">
-      <div class="config-label">Tiempo por Palabra</div>
-      <div class="option-grid" id="timeOpts"></div>
-    </div>
-  </div>
-  <div class="bottom-bar">
-    <button class="full-btn" id="configNextBtn" onclick="nav('players')">Continuar →</button>
-  </div>
-</div>
-
-<!-- ══ PLAYERS ══ -->
-<div id="players" class="screen">
-  <div class="top-bar">
-    <button class="back-btn" onclick="nav('config')">←</button>
-    <h1>Jugadores <span>👥</span></h1>
-  </div>
-  <div class="scroll-content" style="flex:1;">
-    <div class="player-list" id="playerList"></div>
-    <button class="add-player-btn" onclick="addPlayer()" id="addPlayerBtn">+ Agregar jugador</button>
-  </div>
-  <div class="bottom-bar">
-    <button class="full-btn" onclick="beginGame()">¡Empezar! 🚀</button>
-  </div>
-</div>
-
-<!-- ══ HANDOFF ══ -->
-<div id="handoff" class="screen">
-  <div class="handoff-frog">🐸</div>
-  <div class="handoff-avatar" id="handoffAvatar"></div>
-  <div>
-    <div class="handoff-name" id="handoffName"></div>
-    <div class="handoff-sub">Es tu turno</div>
-  </div>
-  <div class="handoff-device">📱</div>
-  <p style="color:var(--muted);font-size:14px;text-align:center;max-width:260px;">
-    Pasa el dispositivo y presiona cuando estés listo
-  </p>
-  <button class="full-btn" style="max-width:300px;" onclick="startCountdown()">Listo ✋</button>
-</div>
-
-<!-- ══ COUNTDOWN ══ -->
-<div id="countdown" class="screen">
-  <div id="countdownDisplay"></div>
-  <div class="countdown-frog">🐸</div>
-</div>
-
-<!-- ══ GAME ══ -->
-<div id="game" class="screen">
-  <div class="progress-bar-wrap">
-    <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
-  </div>
-  <div class="game-header">
-    <div class="game-player-tag">
-      <div class="game-avatar" id="gameAvatar"></div>
-      <div>
-        <div class="game-player-name" id="gamePlayerName"></div>
-        <div class="game-progress" id="gameProgress"></div>
+    <div class="game-body">
+      <div class="word-hint" id="wordHint"></div>
+      <div class="tiles-area">
+        <div class="answer-slots"  id="answerSlots"></div>
+        <div class="tiles-divider"></div>
+        <div class="tiles-row"     id="scrambledTiles"></div>
+      </div>
+      <div class="game-actions">
+        <button class="game-btn"         onclick="clearAnswer()">🔄 Clear</button>
+        <button class="game-btn primary" onclick="checkAnswer()" id="checkBtn" disabled>✓ Check</button>
       </div>
     </div>
-    <div class="timer-display" id="timerDisplay">–</div>
   </div>
-  <div class="game-body">
-    <div class="word-hint" id="wordHint"></div>
-    <div class="tiles-area">
-      <div class="answer-slots" id="answerSlots"></div>
-      <div class="tiles-divider"></div>
-      <div class="tiles-row" id="scrambledTiles"></div>
-    </div>
-    <div class="game-actions">
-      <button class="game-btn" onclick="clearAnswer()">🔄 Limpiar</button>
-      <button class="game-btn primary" id="checkBtn" onclick="checkAnswer()" disabled>✓ Verificar</button>
-    </div>
-  </div>
-</div>
 
-<!-- ══ RESULTS ══ -->
-<div id="results" class="screen">
-  <div class="top-bar">
-    <h1>Resultados <span>🏆</span></h1>
-  </div>
-  <div class="results-body">
-    <div class="winner-banner" id="winnerBanner"></div>
-    <div class="results-grid" id="resultsGrid"></div>
-    <div class="word-history" id="wordHistorySection"></div>
-  </div>
-  <div class="bottom-bar">
-    <button class="full-btn" onclick="nav('home')">🏠 Inicio</button>
-  </div>
-</div>
+  <!-- ══ READING GAME ══ -->
+  <div id="reading-game" class="screen">
 
-<!-- ══ ABOUT ══ -->
-<div id="about" class="screen">
-  <div class="top-bar">
-    <button class="back-btn" onclick="nav('home')">←</button>
-    <h1>Acerca de <span>🐸</span></h1>
+    <!-- Reading View -->
+    <div id="rg-reading-view">
+      <div class="top-bar">
+        <h1 id="rg-title" style="flex:1;font-size:17px;"></h1>
+        <button class="pause-btn" id="rg-pause-btn" onclick="pauseReadingGame()" title="Pause">⏸</button>
+      </div>
+      <div class="rg-reading-body scroll-content">
+        <div id="rg-image-wrap" class="rg-image-wrap"></div>
+        <div id="rg-text"       class="rg-text"></div>
+      </div>
+      <div class="bottom-bar">
+        <button class="full-btn" onclick="ReadingGame._startQuiz()">I'm done reading → Questions</button>
+      </div>
+    </div>
+
+    <!-- Quiz View -->
+    <div id="rg-quiz-view" style="display:none;display:flex;flex-direction:column;min-height:100vh;">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="rg-q-progress" style="width:0%"></div>
+      </div>
+      <div class="top-bar" style="justify-content:space-between;">
+        <div id="rg-q-num"  class="game-progress" style="font-size:14px;font-weight:700;color:var(--muted);">Question 1 of 5</div>
+        <div id="rg-back-note" class="rg-no-back" style="display:none;">🔒 No going back</div>
+      </div>
+      <div class="scroll-content" style="flex:1;">
+        <div id="rg-q-text" class="rg-q-text"></div>
+        <div id="rg-options" class="rg-options"></div>
+      </div>
+      <div class="bottom-bar">
+        <button class="full-btn" id="rg-next-btn" onclick="ReadingGame._nextQuestion()" disabled>Next →</button>
+      </div>
+    </div>
+
   </div>
-  <div class="scroll-content">
-    <div class="about-card">
-      <h2>🐸 Miss Ale – English Challenge</h2>
-      <p>Aprende inglés de forma divertida con minijuegos diseñados para practicar vocabulario y ortografía.</p>
-      <span class="version-tag">v1.1.0</span>
+
+  <!-- ══ RESULTS ══ -->
+  <div id="results" class="screen">
+    <div class="top-bar">
+      <h1>Results <span>🏆</span></h1>
     </div>
-    <div class="about-card">
-      <h2>🎮 Juegos disponibles</h2>
-      <p><strong style="color:var(--accent)">Word Scramble</strong> — Ordena las letras para formar la palabra correcta en inglés.<br><br>
-      <em style="color:var(--muted)">Próximamente: Memory Match, Traducción, Spelling Bee, Hangman, Quiz...</em></p>
+    <div class="results-body">
+      <div class="winner-banner" id="winnerBanner"></div>
+      <div class="results-grid"  id="resultsGrid"></div>
+      <div id="wordHistorySection"></div>
     </div>
-    <div class="about-card">
-      <h2>📋 Modo Profesor</h2>
-      <p>En configuración, elige <strong style="color:var(--accent)">Custom</strong> para ingresar tu propia lista de palabras. Ideal para clases y evaluaciones.</p>
-    </div>
-    <div class="about-card">
-      <h2>👥 Multijugador</h2>
-      <p>Juega solo o compite con hasta 10 amigos. Gana quien más aciertos tenga — en empate, gana el menor tiempo total.</p>
+    <div class="bottom-bar">
+      <button class="full-btn" onclick="nav('home')">🏠 Home</button>
     </div>
   </div>
-</div>
+
+  <!-- ══ ABOUT ══ -->
+  <div id="about" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="nav('home')">←</button>
+      <h1>About <span>🐸</span></h1>
+    </div>
+    <div class="scroll-content">
+      <div class="about-card">
+        <h2>🐸 Miss Ale – English Challenge</h2>
+        <p>Learn English the fun way with mini-games designed to practice vocabulary, spelling, and reading comprehension.</p>
+        <span class="version-tag">v3.0.0</span>
+      </div>
+      <div class="about-card">
+        <h2>🎮 Available Games</h2>
+        <p><strong style="color:var(--accent)">Word Scramble</strong> — Unscramble letters to form the correct English word. Use Custom mode to add your own words.<br><br>
+        <strong style="color:var(--accent)">Reading Quest</strong> — Read a teacher-provided passage and answer 5 comprehension questions. No going back during the quiz!<br><br>
+        <em style="color:var(--muted)">Coming soon: Memory Match, Spelling Bee, Hangman, Quiz...</em></p>
+      </div>
+      <div class="about-card">
+        <h2>📋 Teacher Mode</h2>
+        <p>In <strong style="color:var(--accent)">Word Scramble</strong>, choose Custom to build your own word list with hints.<br><br>
+        In <strong style="color:var(--accent)">Reading Quest</strong>, paste any text, add an image URL, and write 5 multiple-choice questions.</p>
+      </div>
+      <div class="about-card">
+        <h2>👥 Multiplayer</h2>
+        <p>Play solo or compete with up to 10 friends. Most correct answers wins — ties broken by total time.</p>
+      </div>
+    </div>
+  </div>
 
 </div><!-- #app -->
 
-<script>
-// ══════════════════════════════════════════
-//  DICTIONARY
-// ══════════════════════════════════════════
-const DICTIONARY = {
-  easy:[
-    {word:'CAT',    hint:'🐱 Animal doméstico',  category:'Animales'},
-    {word:'DOG',    hint:'🐶 Animal doméstico',  category:'Animales'},
-    {word:'CAR',    hint:'🚗 Vehículo',          category:'Objetos'},
-    {word:'BOOK',   hint:'📚 Para leer',         category:'Objetos'},
-    {word:'APPLE',  hint:'🍎 Fruta roja',        category:'Comida'},
-    {word:'SUN',    hint:'☀️ En el cielo',       category:'Naturaleza'},
-    {word:'TREE',   hint:'🌳 Planta grande',     category:'Naturaleza'},
-    {word:'FISH',   hint:'🐟 Animal acuático',   category:'Animales'},
-    {word:'BIRD',   hint:'🐦 Vuela',             category:'Animales'},
-    {word:'MOON',   hint:'🌙 De noche',          category:'Naturaleza'},
-    {word:'STAR',   hint:'⭐ En el cielo',       category:'Naturaleza'},
-    {word:'CAKE',   hint:'🎂 Postre dulce',      category:'Comida'},
-    {word:'MILK',   hint:'🥛 Bebida blanca',     category:'Comida'},
-    {word:'FIRE',   hint:'🔥 Caliente',          category:'Naturaleza'},
-    {word:'RAIN',   hint:'🌧️ Cae del cielo',    category:'Naturaleza'},
-    {word:'BEAR',   hint:'🐻 Animal del bosque', category:'Animales'},
-    {word:'ROSE',   hint:'🌹 Flor',              category:'Naturaleza'},
-    {word:'BALL',   hint:'⚽ Para jugar',        category:'Objetos'},
-    {word:'DOOR',   hint:'🚪 Entrada',           category:'Objetos'},
-    {word:'FROG',   hint:'🐸 Salta',             category:'Animales'},
-  ],
-  medium:[
-    {word:'COMPUTER',hint:'💻 Tecnología',        category:'Tecnología'},
-    {word:'ELEPHANT',hint:'🐘 Animal grande',     category:'Animales'},
-    {word:'AIRPORT', hint:'✈️ Viajes',            category:'Viajes'},
-    {word:'KITCHEN', hint:'🍳 Donde se cocina',   category:'Hogar'},
-    {word:'DOCTOR',  hint:'👨‍⚕️ Profesión de salud',category:'Profesiones'},
-    {word:'SCHOOL',  hint:'🏫 Lugar de estudio',  category:'Lugares'},
-    {word:'GARDEN',  hint:'🌻 Jardín',            category:'Hogar'},
-    {word:'SUMMER',  hint:'☀️ Estación caliente', category:'Naturaleza'},
-    {word:'WINTER',  hint:'❄️ Estación fría',    category:'Naturaleza'},
-    {word:'ORANGE',  hint:'🍊 Fruta cítrica',     category:'Comida'},
-    {word:'PURPLE',  hint:'🟣 Color',             category:'Colores'},
-    {word:'YELLOW',  hint:'🟡 Color brillante',   category:'Colores'},
-    {word:'TRAVEL',  hint:'✈️ Ir a otro lugar',  category:'Viajes'},
-    {word:'MARKET',  hint:'🛒 Lugar de compras',  category:'Lugares'},
-    {word:'BUTTER',  hint:'🧈 Para el pan',       category:'Comida'},
-    {word:'LAWYER',  hint:'⚖️ Profesión legal',   category:'Profesiones'},
-    {word:'ROCKET',  hint:'🚀 Va al espacio',     category:'Tecnología'},
-    {word:'BRIDGE',  hint:'🌉 Une dos lados',     category:'Lugares'},
-    {word:'CHEESE',  hint:'🧀 Lácteo',            category:'Comida'},
-    {word:'DRAGON',  hint:'🐉 Criatura mítica',   category:'Animales'},
-  ],
-  hard:[
-    {word:'ENVIRONMENT',    hint:'🌍 Naturaleza que nos rodea',  category:'Ciencia'},
-    {word:'KNOWLEDGE',      hint:'🧠 Lo que sabes',             category:'Conceptos'},
-    {word:'PROGRAMMING',    hint:'💻 Escribir código',          category:'Tecnología'},
-    {word:'INDEPENDENT',    hint:'🗽 Libre, autónomo',          category:'Conceptos'},
-    {word:'UNIVERSITY',     hint:'🎓 Educación superior',       category:'Lugares'},
-    {word:'RESTAURANT',     hint:'🍽️ Lugar donde comer',       category:'Lugares'},
-    {word:'MATHEMATICS',    hint:'📐 Ciencia de los números',   category:'Ciencia'},
-    {word:'ELECTRICITY',    hint:'⚡ Energía',                  category:'Ciencia'},
-    {word:'COMMUNICATION',  hint:'📡 Transmitir mensajes',      category:'Conceptos'},
-    {word:'TRANSPORTATION', hint:'🚌 Moverse de lugar',         category:'Viajes'},
-    {word:'PHOTOGRAPHY',    hint:'📷 Arte de las fotos',        category:'Arte'},
-    {word:'ARCHITECTURE',   hint:'🏛️ Diseño de edificios',    category:'Arte'},
-    {word:'CELEBRATION',    hint:'🎉 Festejo',                  category:'Conceptos'},
-    {word:'TEMPERATURE',    hint:'🌡️ Medida de calor/frío',   category:'Ciencia'},
-    {word:'IMAGINATION',    hint:'✨ Crear en la mente',        category:'Conceptos'},
-  ]
-};
+<!-- ══ PAUSE OVERLAY ══ -->
+<div id="pauseOverlay" class="pause-overlay">
+  <div class="pause-modal">
+    <div class="pause-icon">⏸</div>
+    <div class="pause-title">Game Paused</div>
+
+    <div class="pause-volume-row">
+      <span class="pause-vol-icon">🔊</span>
+      <input type="range" id="pauseVolumeSlider" class="pause-slider"
+        min="0" max="100" value="80"
+        oninput="updateVolume(this.value)">
+      <span class="pause-vol-label" id="pauseVolumeLabel">80%</span>
+    </div>
+
+    <div class="pause-actions">
+      <button class="pause-resume-btn" onclick="closePause()">▶ Resume</button>
+      <button class="pause-quit-btn"   onclick="quitGame()">✕ Quit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts: core first, then game modules -->
+<script src="js/app.js"></script>
+<script src="games/scramble.js"></script>
+<script src="games/reading.js"></script>
+<!-- Add new games here: <script src="games/mygame.js"></script> -->
 
-// ══════════════════════════════════════════
-//  GAME REGISTRY  (extensible)
-// ══════════════════════════════════════════
-const GAMES = [
-  {id:'scramble', name:'Word Scramble', icon:'🔤',
-   desc:'Ordena las letras desordenadas para formar la palabra correcta en inglés.',
-   difficulty:3, available:true},
-  {id:'memory',   name:'Memory Match',  icon:'🃏',
-   desc:'Encuentra los pares de palabras en inglés y su significado.',
-   difficulty:2, available:false},
-  {id:'translate',name:'Translate It!', icon:'🌐',
-   desc:'Traduce palabras del español al inglés contra el reloj.',
-   difficulty:2, available:false},
-  {id:'spelling', name:'Spelling Bee',  icon:'🐝',
-   desc:'Escucha la palabra y escríbela correctamente.',
-   difficulty:4, available:false},
-];
-
-// ══════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════
-const state = {
-  selectedGame: null,
-  config: {difficulty:'easy', wordCount:10, timeLimit:0},
-  players: [''],
-  customWords: [],
-  currentPlayerIndex: 0,
-  scores: [],
-  round: {
-    words:[], wordIndex:0, startTime:null,
-    timerInterval:null, answer:[], scrambled:[],
-    blocked: false   // prevent double-submit
-  }
-};
-
-
-// ══════════════════════════════════════════
-// AUDIO
-// ══════════════════════════════════════════
-
-const menuMusic = new Audio('mainmusic.mp3');
-const gameMusic = new Audio('gamemusic.mp3');
-
-menuMusic.loop = true;
-gameMusic.loop = true;
-
-menuMusic.volume = 1;
-gameMusic.volume = 1;
-
-let currentMusic = null;
-
-function playMenuMusic() {
-  if (currentMusic === menuMusic) return;
-
-  if (currentMusic) {
-    currentMusic.pause();
-    currentMusic.currentTime = 0;
-  }
-
-  menuMusic.play().catch(() => {});
-  currentMusic = menuMusic;
-}
-
-function playGameMusic() {
-  if (currentMusic === gameMusic) return;
-
-  if (currentMusic) {
-    currentMusic.pause();
-    currentMusic.currentTime = 0;
-  }
-
-  gameMusic.play().catch(() => {});
-  currentMusic = gameMusic;
-}
-
-// ══════════════════════════════════════════
-//  NAVIGATION  (with transitions)
-// ══════════════════════════════════════════
-let currentScreen = 'home';
-function nav(id) {
-  const prev = document.getElementById(currentScreen);
-  const next = document.getElementById(id);
-  if (!next || id === currentScreen) return;
-
-  // direction hint
-  const order = ['home','game-select','config','players','handoff','countdown','game','results','about'];
-  const goForward = order.indexOf(id) >= order.indexOf(currentScreen);
-
-  prev.classList.remove('visible');
-  prev.classList.add(goForward ? 'slide-left' : 'slide-right');
-
-  next.classList.add('active');
-  next.classList.add(goForward ? 'slide-right' : 'slide-left');
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    next.classList.add('visible');
-    next.classList.remove('slide-left','slide-right');
-  }));
-
-  setTimeout(() => {
-    prev.classList.remove('active','slide-left','slide-right');
-    currentScreen = id;
-  }, 300);
-
-  // screen hooks
-  if (id === 'game-select') renderGameSelect();
-  if (id === 'config')      renderConfig();
-  if (id === 'players')     renderPlayers();
-
-  // Cambio automático de música
-
-if (
-  id === 'home' ||
-  id === 'game-select' ||
-  id === 'config' ||
-  id === 'players' ||
-  id === 'results' ||
-  id === 'about'
-) {
-  playMenuMusic();
-}
-
-if (
-  id === 'handoff' ||
-  id === 'countdown' ||
-  id === 'game'
-) {
-  playGameMusic();
-}
-}
-
-// ══════════════════════════════════════════
-//  GAME SELECT
-// ══════════════════════════════════════════
-function renderGameSelect() {
-  document.getElementById('gameGrid').innerHTML = GAMES.map(g => `
-    <div class="game-card ${g.available?'':'locked'}" ${g.available?`onclick="selectGame('${g.id}')"`:''}>
-      <span class="game-badge ${g.available?'badge-available':'badge-soon'}">${g.available?'Disponible':'Pronto'}</span>
-      <div class="game-icon">${g.icon}</div>
-      <div class="game-name">${g.name}</div>
-      <div class="game-desc">${g.desc}</div>
-      <div class="diff-row">
-        ${[1,2,3,4,5].map(i=>`<div class="diff-dot ${i<=g.difficulty?'on':''}"></div>`).join('')}
-        <span style="font-size:11px;color:var(--muted);margin-left:4px;">Dificultad</span>
-      </div>
-    </div>`).join('');
-}
-
-function selectGame(id) {
-  state.selectedGame = GAMES.find(g => g.id === id);
-  nav('config');
-}
-
-// ══════════════════════════════════════════
-//  CONFIG
-// ══════════════════════════════════════════
-function renderConfig() {
-  const diffs = [
-    {v:'easy',   l:'Fácil 🟢'},
-    {v:'medium', l:'Medio 🟡'},
-    {v:'hard',   l:'Difícil 🔴'},
-    {v:'custom', l:'Custom 📋'},
-  ];
-  document.getElementById('diffOpts').innerHTML = diffs.map(d =>
-    `<button class="opt-btn ${state.config.difficulty===d.v?'selected':''}"
-       onclick="setConfig('difficulty','${d.v}')">${d.l}</button>`).join('');
-
-  const box = document.getElementById('customWordsBox');
-  box.className = 'custom-words-box' + (state.config.difficulty==='custom'?' show':'');
-
-  const counts = [5,10,20,50];
-  document.getElementById('wordCountOpts').innerHTML = counts.map(c =>
-    `<button class="opt-btn ${state.config.wordCount===c?'selected':''}"
-       onclick="setConfig('wordCount',${c})">${c} palabras</button>`).join('');
-
-  const times = [{v:0,l:'Sin límite'},{v:10,l:'10 seg'},{v:20,l:'20 seg'},{v:30,l:'30 seg'}];
-  document.getElementById('timeOpts').innerHTML = times.map(t =>
-    `<button class="opt-btn ${state.config.timeLimit===t.v?'selected':''}"
-       onclick="setConfig('timeLimit',${t.v})">${t.l}</button>`).join('');
-
-  updateCustomCount();
-  updateConfigBtn();
-}
-
-function setConfig(key, val) {
-  state.config[key] = val;
-  renderConfig();
-}
-
-function parseCustomWords() {
-  const raw = document.getElementById('customWordsTextarea').value;
-  const lines = raw.split('\n');
-  const words = [];
-  for (const line of lines) {
-    const parts = line.split('|');
-    const word = parts[0].trim().toUpperCase().replace(/[^A-Z]/g,'');
-    if (word.length >= 2) {
-      const hint = parts[1] ? parts[1].trim() : '📝 Palabra personalizada';
-      words.push({word, hint, category:'Custom'});
-    }
-  }
-  return words;
-}
-
-function updateCustomCount() {
-  const words = parseCustomWords();
-  state.customWords = words;
-  const el = document.getElementById('customCount');
-  if (el) el.textContent = `${words.length} palabra${words.length!==1?'s':''} válida${words.length!==1?'s':''}`;
-  updateConfigBtn();
-}
-
-function updateConfigBtn() {
-  const btn = document.getElementById('configNextBtn');
-  if (!btn) return;
-  if (state.config.difficulty === 'custom') {
-    const ok = state.customWords.length >= 3;
-    btn.disabled = !ok;
-    btn.textContent = ok ? 'Continuar →' : `Agrega al menos 3 palabras (${state.customWords.length}/3)`;
-  } else {
-    btn.disabled = false;
-    btn.textContent = 'Continuar →';
-  }
-}
-
-// ══════════════════════════════════════════
-//  PLAYERS
-// ══════════════════════════════════════════
-function renderPlayers() {
-  if (!state.players.length) state.players = [''];
-  document.getElementById('playerList').innerHTML = state.players.map((p,i) => `
-    <div class="player-row">
-      <div class="player-num">${i+1}</div>
-      <input class="player-input" type="text" placeholder="Jugador ${i+1}" value="${p}"
-        oninput="state.players[${i}]=this.value" maxlength="20">
-      ${state.players.length>1
-        ?`<button class="remove-player-btn" onclick="removePlayer(${i})">✕</button>`:''}
-    </div>`).join('');
-  document.getElementById('addPlayerBtn').style.display = state.players.length>=10?'none':'';
-}
-
-function addPlayer() {
-  if (state.players.length < 10) { state.players.push(''); renderPlayers(); }
-}
-
-function removePlayer(i) {
-  state.players.splice(i,1); renderPlayers();
-}
-
-// ══════════════════════════════════════════
-//  GAME FLOW  (fixed: single beginGame, clear state)
-// ══════════════════════════════════════════
-function beginGame() {
-  // Normalise player names
-  state.players = state.players.map((p,i) => p.trim() || `Jugador ${i+1}`);
-  state.currentPlayerIndex = 0;
-  state.scores = state.players.map(n => ({name:n, correct:0, wrong:0, totalTime:0, words:[]}));
-  showHandoff();
-}
-
-function showHandoff() {
-  const name = state.players[state.currentPlayerIndex];
-  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  document.getElementById('handoffAvatar').textContent = initials;
-  document.getElementById('handoffName').textContent = name;
-  nav('handoff');
-}
-
-function startCountdown() {
-  nav('countdown');
-  const display = document.getElementById('countdownDisplay');
-  let n = 3;
-  function tick() {
-    if (n > 0) {
-      display.innerHTML = `<div class="countdown-num">${n}</div>`;
-      n--;
-      setTimeout(tick, 800);
-    } else {
-      display.innerHTML = `<div class="countdown-go">GO! 🚀</div>`;
-      setTimeout(startRound, 620);
-    }
-  }
-  tick();
-}
-
-// ══════════════════════════════════════════
-//  WORD SCRAMBLE ROUND
-// ══════════════════════════════════════════
-function buildWordPool() {
-  if (state.config.difficulty === 'custom') {
-    return [...state.customWords].sort(() => Math.random()-.5);
-  }
-  return [...DICTIONARY[state.config.difficulty]].sort(() => Math.random()-.5);
-}
-
-function startRound() {
-  const pool = buildWordPool();
-  const count = Math.min(state.config.wordCount, pool.length);
-  state.round.words    = pool.slice(0, count);
-  state.round.wordIndex= 0;
-  state.round.blocked  = false;
-  nav('game');
-  renderWord();
-}
-
-function renderWord() {
-  const round = state.round;
-  round.blocked = false;
-  const wordObj = round.words[round.wordIndex];
-  const letters = wordObj.word.split('');
-  round.answer   = Array(letters.length).fill(null);
-  round.scrambled= scrambleLetters(letters);
-
-  // Header
-  const name     = state.players[state.currentPlayerIndex];
-  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  document.getElementById('gameAvatar').textContent    = initials;
-  document.getElementById('gamePlayerName').textContent= name;
-  document.getElementById('gameProgress').textContent  =
-    `Palabra ${round.wordIndex+1} de ${round.words.length}`;
-  document.getElementById('progressBar').style.width   =
-    (round.wordIndex / round.words.length * 100) + '%';
-
-  document.getElementById('wordHint').innerHTML =
-    `Pista: <strong>${wordObj.hint}</strong>&nbsp;&nbsp;·&nbsp;&nbsp;Categoría: <strong>${wordObj.category}</strong>`;
-
-  renderTiles();
-  startWordTimer();
-}
-
-function scrambleLetters(letters) {
-  let arr = [...letters], attempts = 0;
-  do { arr = arr.sort(() => Math.random()-.5); attempts++; }
-  while (arr.join('') === letters.join('') && letters.length > 1 && attempts < 30);
-  return arr;
-}
-
-// ── Tile rendering ──
-function renderTiles() {
-  const round  = state.round;
-  const wordLen= round.words[round.wordIndex].word.length;
-
-  // Answer slots
-  document.getElementById('answerSlots').innerHTML = round.answer.map((ch,i) => {
-    const hasCh = ch !== null;
-    return `<div class="answer-slot ${hasCh?'filled':''}" onclick="removeFromSlot(${i})">${hasCh?ch:''}</div>`;
-  }).join('');
-
-  // Scrambled tiles
-  document.getElementById('scrambledTiles').innerHTML = round.scrambled.map((ch,i) =>
-    `<div class="tile ${ch===null?'used':''}" onclick="placeLetter(${i})">${ch!==null?ch:''}</div>`
-  ).join('');
-
-  const filled = round.answer.filter(c=>c!==null).length;
-  document.getElementById('checkBtn').disabled = (filled < wordLen);
-}
-
-function placeLetter(tileIdx) {
-  const round = state.round;
-  if (round.blocked || round.scrambled[tileIdx] === null) return;
-  const slot = round.answer.indexOf(null);
-  if (slot === -1) return;
-  round.answer[slot]       = round.scrambled[tileIdx];
-  round.scrambled[tileIdx] = null;
-  renderTiles();
-}
-
-function removeFromSlot(slotIdx) {
-  const round = state.round;
-  if (round.blocked || round.answer[slotIdx] === null) return;
-  const ch  = round.answer[slotIdx];
-  const idx = round.scrambled.indexOf(null);
-  if (idx !== -1) round.scrambled[idx] = ch;
-  else round.scrambled.push(ch);
-  round.answer[slotIdx] = null;
-  renderTiles();
-}
-
-function clearAnswer() {
-  const round = state.round;
-  if (round.blocked) return;
-  const letters = round.words[round.wordIndex].word.split('');
-  round.answer   = Array(letters.length).fill(null);
-  round.scrambled= scrambleLetters(letters);
-  renderTiles();
-}
-
-// ── Verify ──
-function checkAnswer() {
-  const round = state.round;
-  if (round.blocked) return;
-  round.blocked = true;
-
-  const wordObj = round.words[round.wordIndex];
-  const guess   = round.answer.join('');
-  const correct = guess === wordObj.word;
-  const elapsed = stopWordTimer();
-
-  // Visual feedback on slots
-  const slots = document.querySelectorAll('.answer-slot');
-  slots.forEach(s => {
-    s.classList.remove('correct','wrong');
-    s.classList.add(correct ? 'correct' : 'wrong');
-  });
-
-  // Record score (this is the only place we write to scores)
-  const scoreEntry = state.scores[state.currentPlayerIndex];
-  if (correct) scoreEntry.correct++; else scoreEntry.wrong++;
-  scoreEntry.totalTime += elapsed;
-  scoreEntry.words.push({
-    word: wordObj.word,
-    correct,
-    time: elapsed,
-    guess: correct ? null : guess
-  });
-
-  setTimeout(() => {
-    round.wordIndex++;
-    if (round.wordIndex >= round.words.length) endPlayerTurn();
-    else renderWord();
-  }, correct ? 700 : 1100);
-}
-
-// ── Timer ──
-function startWordTimer() {
-  const round   = state.round;
-  const limit   = state.config.timeLimit;
-  const display = document.getElementById('timerDisplay');
-  if (round.timerInterval) clearInterval(round.timerInterval);
-  round.startTime = Date.now();
-
-  display.classList.remove('warning');
-  display.textContent = limit === 0 ? '0.0s' : limit + 's';
-
-  round.timerInterval = setInterval(() => {
-    const el = (Date.now() - round.startTime) / 1000;
-    if (limit === 0) {
-      display.textContent = el.toFixed(1) + 's';
-    } else {
-      const rem = limit - el;
-      if (rem <= 0) { stopWordTimer(); autoFail(); return; }
-      display.textContent = rem.toFixed(1) + 's';
-      display.classList.toggle('warning', rem <= 5);
-    }
-  }, 80);
-}
-
-function stopWordTimer() {
-  const round = state.round;
-  if (round.timerInterval) clearInterval(round.timerInterval);
-  round.timerInterval = null;
-  return (Date.now() - round.startTime) / 1000;
-}
-
-function autoFail() {
-  const round = state.round;
-  if (round.blocked) return;
-  round.blocked = true;
-
-  const wordObj = round.words[round.wordIndex];
-  const elapsed = state.config.timeLimit;
-  const entry   = state.scores[state.currentPlayerIndex];
-  entry.wrong++;
-  entry.totalTime += elapsed;
-  entry.words.push({word:wordObj.word, correct:false, time:elapsed, guess:'(tiempo)'});
-
-  document.querySelectorAll('.answer-slot').forEach(s => {
-    s.classList.remove('correct'); s.classList.add('wrong');
-  });
-  setTimeout(() => {
-    round.wordIndex++;
-    if (round.wordIndex >= round.words.length) endPlayerTurn();
-    else renderWord();
-  }, 950);
-}
-
-// ── Turn ──
-function endPlayerTurn() {
-  stopWordTimer();
-  state.currentPlayerIndex++;
-  if (state.currentPlayerIndex < state.players.length) showHandoff();
-  else showResults();
-}
-
-// ══════════════════════════════════════════
-//  RESULTS
-// ══════════════════════════════════════════
-function showResults() {
-  const sorted = [...state.scores].sort((a,b) => {
-    if (b.correct !== a.correct) return b.correct - a.correct;
-    return a.totalTime - b.totalTime;
-  });
-
-  // Winner banner
-  const winner = sorted[0];
-  document.getElementById('winnerBanner').innerHTML = `
-    <div class="winner-frog">🐸</div>
-    <div class="winner-label">¡Ganador!</div>
-    <div class="winner-name">🏆 ${winner.name}</div>
-    <div style="font-size:13px;color:var(--muted);margin-top:4px;">
-      ${winner.correct} correctas · ${winner.totalTime.toFixed(1)}s total
-    </div>`;
-
-  const rankCls = ['rank-1','rank-2','rank-3'];
-  document.getElementById('resultsGrid').innerHTML = sorted.map((s,i) => `
-    <div class="result-row">
-      <div class="rank-badge ${rankCls[i]||'rank-other'}">${i===0?'🏆':i+1}</div>
-      <div class="result-name">${s.name}</div>
-      <div class="result-stats">
-        <div class="result-score">${s.correct}/${s.correct+s.wrong}</div>
-        <div class="result-time">${s.totalTime.toFixed(1)}s</div>
-      </div>
-    </div>`).join('');
-
-  // Word history
-  const wh = document.getElementById('wordHistorySection');
-  const showHistory = state.scores.filter(s=>s.words.length>0);
-  if (showHistory.length) {
-    wh.innerHTML = showHistory.map(s => `
-      <div class="word-history">
-        <div class="wh-title">Historial — ${s.name}</div>
-        <div class="wh-list">
-          ${s.words.map(w => `
-            <div class="wh-row">
-              <span class="wh-word">${w.word}</span>
-              ${!w.correct&&w.guess?`<span class="wh-correct-word">→ ${w.guess}</span>`:''}
-              <span class="${w.correct?'wh-ok':'wh-fail'}">${w.correct?'✓':'✗'}</span>
-              <span class="wh-time">${w.time.toFixed(1)}s</span>
-            </div>`).join('')}
-        </div>
-      </div>`).join('');
-  } else { wh.innerHTML=''; }
-
-  nav('results');
-}
-
-// ══════════════════════════════════════════
-//  BOOT
-// ══════════════════════════════════════════
-(function boot() {
-  const s = document.getElementById('home');
-  s.classList.add('active');
-  requestAnimationFrame(()=>requestAnimationFrame(()=>s.classList.add('visible')));
-  currentScreen = 'home';
-})();
-</script>
 </body>
 </html>
